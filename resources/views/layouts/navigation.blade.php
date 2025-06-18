@@ -18,6 +18,10 @@
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex items-center">
                     <!-- Chamados - todos usuários -->
+                    <x-nav-link :href="route('dashboard')">
+                        {{ __('Dashboard') }}
+                    </x-nav-link>
+
                     <x-nav-link :href="route('chamados.index')" :active="request()->routeIs('chamados.*')">
                         {{ __('Chamados') }}
                     </x-nav-link>
