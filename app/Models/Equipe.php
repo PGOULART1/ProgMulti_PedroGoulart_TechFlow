@@ -21,4 +21,9 @@ class Equipe extends Model
     {
         return $this->hasMany(Chamado::class);
     }
+
+    public function usuarios()
+{
+    return $this->hasMany(User::class);
+}
 }

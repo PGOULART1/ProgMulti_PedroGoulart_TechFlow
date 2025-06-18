@@ -18,7 +18,8 @@ class AppServiceProvider extends ServiceProvider
     }
 
     protected $policies = [
-        Chamado::class => ChamadoPolicy::class, // <-- Adicione esta linha
+        Chamado::class => ChamadoPolicy::class,
+        Equipe::class => EquipePolicy::class,
     ];
 
     /**
