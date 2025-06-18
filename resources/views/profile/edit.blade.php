@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Editar Perfil - TechFlow</title>
+    <title>Editar Perfil - TrackIt</title>
     @vite('resources/css/app.css')
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center h-screen transition-colors duration-300">

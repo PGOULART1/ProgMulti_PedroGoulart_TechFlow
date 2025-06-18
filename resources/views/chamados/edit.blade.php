@@ -51,6 +51,24 @@
                         @enderror
                     </div>
 
+                    <div class="mb-4">
+                        <label for="equipe_id" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Equipe Responsável</label>
+                        <select name="equipe_id" id="equipe_id"
+                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 leading-tight focus:outline-none focus:shadow-outline dark:bg-gray-700 dark:border-gray-600"
+                                @disabled(!Auth::user()->can('updatePriorityAndStatus', $chamado))>
+                            <option value="">Selecione uma equipe</option>
+                            @foreach ($equipes as $equipe)
+                            <option value="{{ $equipe->id }}"
+                                {{ old('equipe_id', $chamado->equipe_id) == $equipe->id ? 'selected' : '' }}>
+                                {{ $equipe->nome }}
+                            </option>
+                            @endforeach
+                            </select>
+                             @error('equipe_id')
+                                <p class="text-red-500 text-xs italic mt-2 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                    </div>
+
                     {{-- Adicione o campo de status aqui --}}
                     <div class="mb-4">
                         <label for="status"

@@ -5,15 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Chamado;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect; // Pode remover se usar redirect()->route
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Validation\Rule; // Importar Rule para validação condicional
+use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Models\Equipe;
+use App\Models\Log;
 
 class ChamadoController extends Controller
 {
     use AuthorizesRequests;
+
     /**
      * Exibe a lista de chamados do usuário.
      *
@@ -21,11 +23,15 @@ class ChamadoController extends Controller
      */
     public function index(): View
     {
-        // Se você quiser que o técnico veja TODOS os chamados, pode ajustar aqui:
         if (Auth::user()->role === 'tecnica') {
-            $chamados = Chamado::latest()->paginate(10);
+            // Técnicos veem todos os chamados com a equipe relacionada
+            $chamados = Chamado::with('equipe')->latest()->paginate(10);
         } else {
-            $chamados = Chamado::where('user_id', Auth::id())->latest()->paginate(10);
+            // Usuários comuns veem apenas seus próprios chamados com a equipe relacionada
+            $chamados = Chamado::with('equipe')
+                ->where('user_id', Auth::id())
+                ->latest()
+                ->paginate(10);
         }
 
         return view('chamados.index', compact('chamados'));
@@ -38,7 +44,8 @@ class ChamadoController extends Controller
      */
     public function create(): View
     {
-        return view('chamados.create');
+        $equipes = Equipe::all(); // Busca todas as equipes
+        return view('chamados.create', compact('equipes'));
     }
 
     /**
@@ -49,21 +56,30 @@ class ChamadoController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([ // Use $validated para pegar os dados validados
+        $validated = $request->validate([
             'titulo' => 'required|string|max:255',
             'descricao' => 'required|string',
             'prioridade' => 'required|in:baixa,media,alta',
+            'equipe_id' => 'nullable|exists:equipes,id',
         ]);
 
-        Chamado::create([
+        // Captura o chamado criado para uso posterior no log
+        $chamado = Chamado::create([
             'user_id' => Auth::id(),
-            'titulo' => $validated['titulo'], // Use $validated
-            'descricao' => $validated['descricao'], // Use $validated
-            'prioridade' => $validated['prioridade'], // Use $validated
-            'status' => 'aberto', // **IMPORTANTE: Defina um status inicial aqui**
+            'titulo' => $validated['titulo'],
+            'descricao' => $validated['descricao'],
+            'prioridade' => $validated['prioridade'],
+            'equipe_id' => $validated['equipe_id'] ?? null,
+            'status' => 'aberto',
         ]);
 
-        return redirect()->route('chamados.index')->with('success', 'Chamado criado com sucesso!'); // Redireciona para a lista de chamados
+        Log::create([
+            'user_id' => auth()->id(),
+            'acao' => 'Criou um chamado',
+            'detalhes' => 'Título: ' . $chamado->titulo,
+        ]);
+
+        return redirect()->route('chamados.index')->with('success', 'Chamado criado com sucesso!');
     }
 
     /**
@@ -74,8 +90,7 @@ class ChamadoController extends Controller
      */
     public function show(Chamado $chamado): View
     {
-        // Usa a policy 'view'. Se o usuário não puder ver, ele lança um 403.
-        $this->authorize('view', $chamado); // A Lógica de Autorização está aqui!
+        $this->authorize('view', $chamado);
 
         return view('chamados.show', compact('chamado'));
     }
@@ -88,10 +103,11 @@ class ChamadoController extends Controller
      */
     public function edit(Chamado $chamado): View
     {
-        // Usa a policy 'update'. Se o usuário não puder editar, ele lança um 403.
-        $this->authorize('update', $chamado); // A Lógica de Autorização está aqui!
+        $this->authorize('update', $chamado);
 
-        return view('chamados.edit', compact('chamado'));
+        $equipes = Equipe::all();
+
+        return view('chamados.edit', compact('chamado', 'equipes'));
     }
 
     /**
@@ -103,39 +119,36 @@ class ChamadoController extends Controller
      */
     public function update(Request $request, Chamado $chamado): RedirectResponse
     {
-        // Primeiramente, autoriza a atualização geral do chamado (proprietário ou técnico)
-        $this->authorize('update', $chamado); // A Lógica de Autorização está aqui!
+        $this->authorize('update', $chamado);
 
-        // Regras de validação para todos os usuários
         $rules = [
             'titulo' => 'required|string|max:255',
             'descricao' => 'required|string',
             'prioridade' => 'required|in:baixa,media,alta',
             'status' => 'required|in:aberto,em andamento,resolvido,fechado',
+            'equipe_id' => 'nullable|exists:equipes,id',
         ];
 
-        // Se o usuário NÃO for 'tecnica', ele não pode alterar prioridade nem status
-        if (Auth::user()->role !== 'tecnica') { // **CORREÇÃO AQUI**
-            // Se não é técnico, o status e a prioridade DEVEM ser os valores atuais do chamado
+        if (Auth::user()->role !== 'tecnica') {
             $rules['prioridade'] = [
                 'required',
-                // Aceita apenas o valor atual do chamado para não técnicos
                 Rule::in([$chamado->prioridade]),
             ];
             $rules['status'] = [
                 'required',
-                // Aceita apenas o valor atual do chamado para não técnicos
                 Rule::in([$chamado->status]),
             ];
         }
 
         $validated = $request->validate($rules);
 
-        // Se o usuário é "tecnica", ele pode atualizar todos os campos validados.
-        // Se não é, o middleware de validação já garantiu que prioridade/status
-        // só possam ser o valor atual do chamado, então podemos atualizar tudo.
         $chamado->update($validated);
 
+        Log::create([
+            'user_id' => auth()->id(),
+            'acao' => 'Atualizou um chamado',
+            'detalhes' => 'Título: ' . $chamado->titulo,
+        ]);
 
         return redirect()->route('chamados.index')->with('success', 'Chamado atualizado com sucesso!');
     }
@@ -148,10 +161,17 @@ class ChamadoController extends Controller
      */
     public function destroy(Chamado $chamado): RedirectResponse
     {
-        // Usa a policy 'delete'. Se o usuário não puder excluir, ele lança um 403.
-        $this->authorize('delete', $chamado); // A Lógica de Autorização está aqui!
+        $this->authorize('delete', $chamado);
 
+        // Captura título antes de deletar para registrar no log
+        $titulo = $chamado->titulo;
         $chamado->delete();
+
+        Log::create([
+            'user_id' => auth()->id(),
+            'acao' => 'Excluiu um chamado',
+            'detalhes' => 'Título: ' . $titulo,
+        ]);
 
         return redirect()->route('chamados.index')->with('success', 'Chamado excluído com sucesso!');
     }

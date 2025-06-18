@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>TechFlow</title>
+        <title>TrackIt</title>
         @vite('resources/css/app.css') 
 
     </head>
@@ -12,9 +12,8 @@
 
     <body class="bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 flex items-center justify-center h-screen transition-colors duration-300">
         <div class="bg-white dark:bg-gray-800 p-8 rounded shadow-md text-center">
-            <img src="{{ asset('img/earthtech.png') }}" alt="TechFlow Logo" class="mx-auto h-48 w-auto mb-5">
-            <h1 class="text-2xl font-semibold mb-4">Bem-vindo ao TechFlow</h1>
-            <p class="mb-6">Seu sistema de abertura de chamados interno.</p>
+            <img src="{{ asset('img/trackit.png') }}" alt="TrackIt Logo" class="mx-auto h-48 w-auto mb-5">
+            <p class="mb-6">Simples. Inteligente. Produtivo.</p>
             <div>
                 <a href="{{ route('login') }}" class="text-blue-500 hover:underline dark:text-blue-400">Login</a>
                 <span class="text-gray-400 mx-2">|</span>

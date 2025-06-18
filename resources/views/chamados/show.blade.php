@@ -40,6 +40,14 @@
                         </span>
                     </div>
 
+                    
+                    <div class="mb-6">
+                        <h3 class="text-lg font-bold text-gray-700 dark:text-gray-300">{{ __('Equipe Responsável:') }}</h3>
+                        <p class="mt-1 text-gray-900 dark:text-gray-100">
+                            {{ $chamado->equipe ? $chamado->equipe->nome : __('Não atribuída') }}
+                        </p>
+                    </div>
+
                     <div class="mb-4">
                         <h3 class="text-lg font-bold text-gray-700 dark:text-gray-300">{{ __('Criado Em:') }}</h3>
                         <p class="mt-1 text-gray-900 dark:text-gray-100">{{ $chamado->created_at->format('d/m/Y H:i') }}</p>

@@ -3,12 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>TechFlow - Login</title>
+    <title>TrackIt - Login</title>
     @vite('resources/css/app.css')
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center h-screen transition-colors duration-300">
     <div class="bg-white dark:bg-gray-800 p-8 rounded shadow-md w-96">
-        <h2 class="text-2xl font-semibold mb-6 text-center text-gray-800 dark:text-white">Login - TechFlow</h2>
+        <h2 class="text-2xl font-semibold mb-6 text-center text-gray-800 dark:text-white">Login - TrackIt</h2>
 
         <form method="POST" action="{{ route('login') }}">
             @csrf

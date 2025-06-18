@@ -40,11 +40,22 @@
                     </div>
 
                     <div class="mb-4">
-                        <label for="anexos" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Anexos (opcional)</label>
-                        <input type="file" name="anexos[]" id="anexos" multiple class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 leading-tight focus:outline-none focus:shadow-outline dark:bg-gray-700 dark:border-gray-600">
-                        @error('anexos')
+                        <label for="equipe_id" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Equipe Responsável</label>
+                        <select name="equipe_id" id="equipe_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 leading-tight focus:outline-none focus:shadow-outline dark:bg-gray-700 dark:border-gray-600">
+                            <option value="">Selecione uma equipe</option>
+                                @foreach ($equipes as $equipe)
+                            <option value="{{ $equipe->id }}" {{ old('equipe_id') == $equipe->id ? 'selected' : '' }}>
+                                {{ $equipe->nome }}
+                            </option>
+                        @endforeach
+                        </select>
+                         @error('equipe_id')
                             <p class="text-red-500 text-xs italic mt-2 dark:text-red-400">{{ $message }}</p>
+                        @enderror
                     </div>
+
+
+
 
                     <div class="flex items-center justify-between">
                         <a href="{{ route('dashboard') }}" class="bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-300 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline mr-2">

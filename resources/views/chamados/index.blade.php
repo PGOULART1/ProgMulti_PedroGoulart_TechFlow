@@ -37,6 +37,9 @@
                                             {{ __('Status') }}
                                         </th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            {{ __('Equipe') }}
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             {{ __('Criado Em') }}
                                         </th>
                                         <th scope="col" class="relative px-6 py-3">
@@ -77,6 +80,9 @@
                                                     @else bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300 @endif">
                                                     {{ ucfirst($chamado->status ?? 'Não Definido') }} {{-- Assumindo 'status' existe, ou fallback --}}
                                                 </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                                {{ $chamado->equipe->nome ?? '—' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                 {{ $chamado->created_at->format('d/m/Y H:i') }}

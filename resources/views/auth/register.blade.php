@@ -3,12 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>TechFlow - Registrar</title>
+    <title>TrackIt - Registrar</title>
     @vite('resources/css/app.css')
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 flex items-center justify-center h-screen transition-colors duration-300">
     <div class="bg-white dark:bg-gray-800 p-8 rounded shadow-md w-96">
-        <h2 class="text-2xl font-semibold mb-6 text-center text-gray-800 dark:text-white">Registrar - TechFlow</h2>
+        <h2 class="text-2xl font-semibold mb-6 text-center text-gray-800 dark:text-white">Registrar - TrackIt</h2>
 
         <form method="POST" action="{{ route('register') }}">
             @csrf
@@ -49,7 +49,7 @@
                 <label for="role" class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Tipo de Usuário</label>
                 <select id="role" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 dark:text-gray-200 leading-tight focus:outline-none focus:shadow-outline dark:bg-gray-700 dark:border-gray-600" name="role" required>
                     <option value="user">Usuário</option>
-                    <option value="technician">Técnico</option>
+                    <option value="tecnica">Técnico</option>
                 </select>
                 @error('role')
                     <p class="text-red-500 text-xs italic mt-2 dark:text-red-400">{{ $message }}</p>
