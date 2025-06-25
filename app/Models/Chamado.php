@@ -12,13 +12,13 @@ class Chamado extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', // Adicione 'user_id' aqui
+        'user_id',
         'titulo',
         'descricao',
         'prioridade',
-        'status', // Se você permitir que o status seja definido na criação
-        // Adicione outros campos que você permite mass assignment
         'equipe_id',
+        'status',
+        'arquivo',
     ];
 
     // Defina os relacionamentos (se houver)
@@ -30,5 +30,14 @@ class Chamado extends Model
     public function equipe()
     {
         return $this->belongsTo(Equipe::class);
+    }
+    public function mensagens()
+    {
+        return $this->hasMany(Mensagem::class)->latest();
+    }
+
+    public function anexos()
+    {   
+        return $this->hasMany(Anexo::class);
     }
 }

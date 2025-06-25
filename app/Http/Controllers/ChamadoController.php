@@ -3,14 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Chamado;
+use App\Models\Equipe;
+use App\Models\Log;
+use App\Models\Mensagem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use App\Models\Equipe;
-use App\Models\Log;
+use App\Models\Anexo;
 
 class ChamadoController extends Controller
 {
@@ -18,16 +20,12 @@ class ChamadoController extends Controller
 
     /**
      * Exibe a lista de chamados do usuário.
-     *
-     * @return View
      */
     public function index(): View
     {
         if (Auth::user()->role === 'tecnica') {
-            // Técnicos veem todos os chamados com a equipe relacionada
             $chamados = Chamado::with('equipe')->latest()->paginate(10);
         } else {
-            // Usuários comuns veem apenas seus próprios chamados com a equipe relacionada
             $chamados = Chamado::with('equipe')
                 ->where('user_id', Auth::id())
                 ->latest()
@@ -39,31 +37,26 @@ class ChamadoController extends Controller
 
     /**
      * Exibe o formulário para criar um novo chamado.
-     *
-     * @return View
      */
     public function create(): View
     {
-        $equipes = Equipe::all(); // Busca todas as equipes
+        $equipes = Equipe::all();
         return view('chamados.create', compact('equipes'));
     }
 
     /**
      * Salva um novo chamado no banco de dados.
-     *
-     * @param Request $request
-     * @return RedirectResponse
      */
     public function store(Request $request): RedirectResponse
-    {
+    {   
         $validated = $request->validate([
             'titulo' => 'required|string|max:255',
             'descricao' => 'required|string',
             'prioridade' => 'required|in:baixa,media,alta',
             'equipe_id' => 'nullable|exists:equipes,id',
+            'arquivos.*' => 'nullable|file|max:5120', // até 5MB por arquivo
         ]);
 
-        // Captura o chamado criado para uso posterior no log
         $chamado = Chamado::create([
             'user_id' => Auth::id(),
             'titulo' => $validated['titulo'],
@@ -72,6 +65,14 @@ class ChamadoController extends Controller
             'equipe_id' => $validated['equipe_id'] ?? null,
             'status' => 'aberto',
         ]);
+
+        // Verifica se há múltiplos arquivos enviados
+        if ($request->hasFile('arquivos')) {
+            foreach ($request->file('arquivos') as $arquivo) {
+                $path = $arquivo->store('anexos', 'public');
+                $chamado->anexos()->create(['arquivo' => $path]);
+            }
+        }
 
         Log::create([
             'user_id' => auth()->id(),
@@ -84,38 +85,29 @@ class ChamadoController extends Controller
 
     /**
      * Exibe os detalhes de um chamado específico.
-     *
-     * @param Chamado $chamado
-     * @return View
      */
     public function show(Chamado $chamado): View
     {
         $this->authorize('view', $chamado);
-
+        // carregar mensagens com usuário para evitar N+1
+        $chamado->load(['mensagens.user', 'equipe']);
+        $this->authorize('view', $chamado);
+        $chamado->load('anexos');
         return view('chamados.show', compact('chamado'));
     }
 
     /**
-     * Exibe o formulário de edição de um chamado específico.
-     *
-     * @param Chamado $chamado
-     * @return View
+     * Exibe o formulário de edição de um chamado.
      */
     public function edit(Chamado $chamado): View
     {
         $this->authorize('update', $chamado);
-
         $equipes = Equipe::all();
-
         return view('chamados.edit', compact('chamado', 'equipes'));
     }
 
     /**
-     * Atualiza o recurso especificado no armazenamento.
-     *
-     * @param Request $request
-     * @param Chamado $chamado
-     * @return RedirectResponse
+     * Atualiza um chamado existente.
      */
     public function update(Request $request, Chamado $chamado): RedirectResponse
     {
@@ -130,14 +122,8 @@ class ChamadoController extends Controller
         ];
 
         if (Auth::user()->role !== 'tecnica') {
-            $rules['prioridade'] = [
-                'required',
-                Rule::in([$chamado->prioridade]),
-            ];
-            $rules['status'] = [
-                'required',
-                Rule::in([$chamado->status]),
-            ];
+            $rules['prioridade'] = ['required', Rule::in([$chamado->prioridade])];
+            $rules['status'] = ['required', Rule::in([$chamado->status])];
         }
 
         $validated = $request->validate($rules);
@@ -154,16 +140,12 @@ class ChamadoController extends Controller
     }
 
     /**
-     * Remove o recurso especificado do armazenamento.
-     *
-     * @param Chamado $chamado
-     * @return RedirectResponse
+     * Remove um chamado.
      */
     public function destroy(Chamado $chamado): RedirectResponse
     {
         $this->authorize('delete', $chamado);
 
-        // Captura título antes de deletar para registrar no log
         $titulo = $chamado->titulo;
         $chamado->delete();
 
@@ -174,5 +156,47 @@ class ChamadoController extends Controller
         ]);
 
         return redirect()->route('chamados.index')->with('success', 'Chamado excluído com sucesso!');
+    }
+
+    /**
+     * Salva uma nova mensagem (comentário) no histórico do chamado.
+     */
+    public function storeMensagem(Request $request, Chamado $chamado): RedirectResponse
+    {
+        $this->authorize('view', $chamado);
+
+        $validated = $request->validate([
+            'mensagem' => 'required|string|max:1000',
+        ]);
+
+        $chamado->mensagens()->create([
+            'user_id' => Auth::id(),
+            'mensagem' => $validated['mensagem'],
+        ]);
+
+        Log::create([
+            'user_id' => auth()->id(),
+            'acao' => 'Adicionou uma mensagem ao chamado',
+            'detalhes' => 'Chamado: ' . $chamado->titulo,
+        ]);
+
+        return redirect()->route('chamados.show', $chamado)->with('success', 'Mensagem enviada com sucesso!');
+    }
+
+    public function adicionarAnexo(Request $request, Chamado $chamado)
+    {
+        $request->validate([
+            'arquivo' => 'required|file|max:5120', // 5MB
+        ]);
+
+        if ($request->hasFile('arquivo')) {
+            $path = $request->file('arquivo')->store('anexos', 'public');
+
+            $chamado->anexos()->create([
+                'arquivo' => $path,
+            ]);
+        }
+
+        return redirect()->route('chamados.show', $chamado)->with('success', 'Anexo adicionado com sucesso!');
     }
 }
