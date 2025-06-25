@@ -8,12 +8,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Models\User;
 
 class EquipeController extends Controller
 {
     /**
      * Exibe a lista de equipes.
      */
+
+     public function atribuirUsuariosForm()
+{
+    $equipes = Equipe::all();
+    $usuarios = User::all(); // Ou filtre conforme sua regra de negócio
+
+    return view('equipes.atribuir', compact('equipes', 'usuarios'));
+}
+
     public function index(): View
     {
         $equipes = Equipe::latest()->paginate(10);

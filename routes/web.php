@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ChamadoController;
 use App\Http\Controllers\EquipeController;
 use App\Http\Controllers\LogController;
+use App\Http\Controllers\EquipeUsuarioController;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -32,5 +34,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/logs', [LogController::class, 'index'])->name('logs.index');
 });
 
+Route::middleware(['auth'])->group(function () {
+    Route::get('/atribuir-usuarios', [EquipeUsuarioController::class, 'edit'])->name('equipes.usuarios.edit');
+    Route::post('/atribuir-usuarios', [EquipeUsuarioController::class, 'update'])->name('equipes.usuarios.update');
+});
+
+Route::get('/atribuir-usuarios', [EquipeController::class, 'atribuirUsuariosForm'])
+    ->middleware('auth')
+    ->name('equipes.atribuir');
 
 require __DIR__.'/auth.php';

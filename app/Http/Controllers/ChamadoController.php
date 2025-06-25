@@ -32,6 +32,14 @@ class ChamadoController extends Controller
                 ->paginate(10);
         }
 
+        if ($user->equipe_id) {
+            $chamados->where('equipe_id', $user->equipe_id);
+        }
+    
+        return view('chamados.index', [
+            'chamados' => $chamados->latest()->paginate(10),
+        ]);
+
         return view('chamados.index', compact('chamados'));
     }
 
