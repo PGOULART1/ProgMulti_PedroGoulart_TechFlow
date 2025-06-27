@@ -8,6 +8,7 @@ use App\Http\Controllers\LogController;
 use App\Http\Controllers\EquipeUsuarioController;
 use App\Http\Controllers\MensagemController;
 use App\Http\Controllers\AnexoController;
+use App\Http\Controllers\DashboardController;
 
 
 
@@ -56,6 +57,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/anexos/{anexo}', [AnexoController::class, 'show'])->name('anexos.show');
 });
+
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 // Inclui as rotas de autenticação (login, register, etc.) que vem com o Laravel Breeze/UI
 require __DIR__.'/auth.php';
