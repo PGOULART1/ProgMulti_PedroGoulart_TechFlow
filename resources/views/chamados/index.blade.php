@@ -103,7 +103,7 @@
                                                 {{ $chamado->created_at->format('d/m/Y H:i') }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                <a href="{{ route('chamados.show', $chamado) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-600 mr-4 transition-colors duration-200">{{ __('Ver') }}</a>
+                                                <a href="{{ route('chamados.show', $chamado) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-600 mr-4 transition-colors duration-200">{{ __('Abrir Chat') }}</a>
                                                 <a href="{{ route('chamados.edit', $chamado) }}" class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-600 mr-4 transition-colors duration-200">{{ __('Editar') }}</a>
                                                 <form action="{{ route('chamados.destroy', $chamado) }}" method="POST" class="inline">
                                                     @csrf

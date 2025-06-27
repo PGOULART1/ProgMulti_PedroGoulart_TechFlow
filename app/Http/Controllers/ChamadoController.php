@@ -13,6 +13,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use App\Models\Anexo;
+use Illuminate\Support\Facades\Storage;
+
 
 class ChamadoController extends Controller
 {
@@ -53,40 +55,53 @@ class ChamadoController extends Controller
      * Salva um novo chamado no banco de dados.
      */
     public function store(Request $request): RedirectResponse
-    {   
-        $validated = $request->validate([
-            'titulo' => 'required|string|max:255',
-            'descricao' => 'required|string',
-            'prioridade' => 'required|in:baixa,media,alta',
-            'equipe_id' => 'nullable|exists:equipes,id',
-            'arquivos.*' => 'nullable|file|max:5120', // até 5MB por arquivo
-        ]);
+{ 
+    $validated = $request->validate([
+        'titulo' => 'required|string|max:255',
+        'descricao' => 'required|string',
+        'prioridade' => 'required|in:baixa,media,alta',
+        'equipe_id' => 'nullable|exists:equipes,id',
+        'arquivos.*' => 'nullable|file|max:5120', // até 5MB por arquivo
+    ]);
 
-        $chamado = Chamado::create([
-            'user_id' => Auth::id(),
-            'titulo' => $validated['titulo'],
-            'descricao' => $validated['descricao'],
-            'prioridade' => $validated['prioridade'],
-            'equipe_id' => $validated['equipe_id'] ?? null,
-            'status' => 'aberto',
-        ]);
+    $chamado = Chamado::create([
+        'user_id' => Auth::id(),
+        'titulo' => $validated['titulo'],
+        'descricao' => $validated['descricao'],
+        'prioridade' => $validated['prioridade'],
+        'equipe_id' => $validated['equipe_id'] ?? null,
+        'status' => 'aberto',
+    ]);
 
-        // Verifica se há múltiplos arquivos enviados
-        if ($request->hasFile('arquivos')) {
-            foreach ($request->file('arquivos') as $arquivo) {
-                $path = $arquivo->store('anexos', 'public');
-                $chamado->anexos()->create(['arquivo' => $path]);
-            }
+    // Verifica se há múltiplos arquivos enviados
+    if ($request->hasFile('arquivos')) {
+        foreach ($request->file('arquivos') as $arquivo) {
+            // Salva o arquivo no disco 'public' dentro da pasta 'anexos'
+            // NOTA: Se você usa 'chamados_anexos' em adicionarAnexo, seja consistente aqui.
+            // Eu manteria 'anexos' se sua migration for genérica para anexos.
+            $path = $arquivo->store('anexos', 'public'); 
+
+            // === CORREÇÃO AQUI ===
+            // Use as mesmas colunas da sua migration
+            $chamado->anexos()->create([
+                'nome_arquivo_hash' => basename($path), // Obtém apenas o nome do arquivo (ex: 'abcdef123.png')
+                'nome_original' => $arquivo->getClientOriginalName(),
+                'tipo_mime' => $arquivo->getMimeType(),
+                'caminho' => $path, // O caminho completo no storage (ex: 'anexos/abcdef123.png')
+                'tamanho' => $arquivo->getSize(),
+            ]);
+            // === FIM DA CORREÇÃO ===
         }
-
-        Log::create([
-            'user_id' => auth()->id(),
-            'acao' => 'Criou um chamado',
-            'detalhes' => 'Título: ' . $chamado->titulo,
-        ]);
-
-        return redirect()->route('chamados.index')->with('success', 'Chamado criado com sucesso!');
     }
+
+    Log::create([
+        'user_id' => auth()->id(),
+        'acao' => 'Criou um chamado',
+        'detalhes' => 'Título: ' . $chamado->titulo,
+    ]);
+
+    return redirect()->route('chamados.index')->with('success', 'Chamado criado com sucesso!');
+}
 
     /**
      * Exibe os detalhes de um chamado específico.
@@ -189,18 +204,29 @@ class ChamadoController extends Controller
     public function adicionarAnexo(Request $request, Chamado $chamado)
     {
         $request->validate([
-            'arquivo' => 'required|file|max:5120', // 5MB
+            'anexo_arquivo' => 'required|file|max:20480', // 20MB max, ajuste conforme necessário
         ]);
 
-        if ($request->hasFile('arquivo')) {
-            $path = $request->file('arquivo')->store('anexos', 'public');
+        if ($request->hasFile('anexo_arquivo')) {
+            $file = $request->file('anexo_arquivo');
 
-            $chamado->anexos()->create([
-                'arquivo' => $path,
-            ]);
+            // Salva o arquivo no disco 'public' dentro da pasta 'chamados_anexos'
+            // O caminho retornado será algo como 'chamados_anexos/nomehash.png'
+            $path = $file->store('chamados_anexos', 'public');
+
+            $anexo = new Anexo();
+            $anexo->chamado_id = $chamado->id;
+            $anexo->nome_arquivo_hash = basename($path); // Apenas o nome do arquivo com hash
+            $anexo->nome_original = $file->getClientOriginalName();
+            $anexo->tipo_mime = $file->getMimeType();
+            $anexo->caminho = $path; // O caminho completo relativo ao storage/app/public/
+            $anexo->tamanho = $file->getSize();
+            $anexo->save();
+
+            return redirect()->back()->with('success', 'Anexo adicionado com sucesso!');
         }
 
-        return redirect()->route('chamados.show', $chamado)->with('success', 'Anexo adicionado com sucesso!');
+        return redirect()->back()->with('error', 'Nenhum arquivo enviado.');
     }
 
     public function close(Chamado $chamado)

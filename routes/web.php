@@ -7,6 +7,7 @@ use App\Http\Controllers\EquipeController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\EquipeUsuarioController;
 use App\Http\Controllers\MensagemController;
+use App\Http\Controllers\AnexoController;
 
 
 
@@ -52,6 +53,8 @@ Route::middleware('auth')->group(function () {
 
     // Rotas de Recurso para Equipes
     Route::resource('equipes', EquipeController::class);
+
+    Route::get('/anexos/{anexo}', [AnexoController::class, 'show'])->name('anexos.show');
 });
 
 // Inclui as rotas de autenticação (login, register, etc.) que vem com o Laravel Breeze/UI

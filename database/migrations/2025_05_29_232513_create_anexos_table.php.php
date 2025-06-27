@@ -11,18 +11,23 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('anexos', function (Blueprint $table) {
-        $table->string('mime_type')->nullable()->after('arquivo');
-    });
-    }
+        Schema::create('anexos', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('chamado_id')->constrained()->onDelete('cascade');
+            $table->string('nome_arquivo_hash'); // O nome que o Laravel dá ao salvar (hash)
+            $table->string('nome_original');    // O nome que o usuário deu
+            $table->string('tipo_mime');        // Ex: image/png, application/pdf
+            $table->string('caminho');          // Ex: 'anexos/2025/06/nomehash.png' - pode ser o 'nome_arquivo_hash' com subpastas
+            $table->integer('tamanho');         // Tamanho do arquivo em bytes
+            $table->timestamps();
+        });
+    }   
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::table('anexos', function (Blueprint $table) {
-            $table->dropColumn('mime_type');
-        });
+        Schema::dropIfExists('anexos');
     }
 };

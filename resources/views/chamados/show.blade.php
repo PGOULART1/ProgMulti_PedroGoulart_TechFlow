@@ -69,21 +69,21 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             @foreach ($chamado->anexos as $anexo)
                                 @php
-                                    $fileUrl = Storage::url($anexo->arquivo);
-                                    // Determinar se é uma imagem com base na extensão ou mime_type (se disponível)
+                                    $fileUrl = Storage::url($anexo->caminho);
+                                    // Determinar se é uma imagem com base na extensão ou tipo_mime (se disponível)
                                     $isImage = false;
-                                    $extension = pathinfo($anexo->arquivo, PATHINFO_EXTENSION);
+                                    $extension = pathinfo($anexo->caminho, PATHINFO_EXTENSION);
                                     $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
                                     if (in_array(strtolower($extension), $imageExtensions)) {
                                         $isImage = true;
-                                    } elseif (isset($anexo->mime_type) && str_starts_with($anexo->mime_type, 'image/')) {
+                                    } elseif (isset($anexo->tipo_mime) && str_starts_with($anexo->tipo_mime, 'image/')) {
                                         $isImage = true;
                                     }
                                 @endphp
                                 <a href="{{ $fileUrl }}" target="_blank"
                                    class="flex flex-col items-center justify-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 text-center">
                                     @if($isImage)
-                                        <img src="{{ $fileUrl }}" alt="{{ basename($anexo->arquivo) }}" class="w-20 h-20 object-cover rounded-md mb-2 shadow">
+                                        <img src="{{ $fileUrl }}" alt="{{ basename($anexo->nome_original) }}" class="w-20 h-20 object-cover rounded-md mb-2 shadow">
                                     @else
                                         {{-- Ícone para outros tipos de arquivo (ex: PDF, documento) --}}
                                         <svg class="w-12 h-12 mb-2 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

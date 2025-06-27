@@ -5,7 +5,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Anexo extends Model
 {
-    protected $fillable = ['chamado_id', 'arquivo'];
+    protected $fillable = [
+        'chamado_id',
+        'nome_arquivo_hash',
+        'nome_original',
+        'tipo_mime',
+        'caminho',
+        'tamanho'
+    ];
 
     public function chamado()
     {
