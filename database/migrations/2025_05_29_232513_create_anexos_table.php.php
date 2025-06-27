@@ -11,7 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
+        Schema::table('anexos', function (Blueprint $table) {
+        $table->string('mime_type')->nullable()->after('arquivo');
+    });
     }
 
     /**
@@ -19,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::table('anexos', function (Blueprint $table) {
+            $table->dropColumn('mime_type');
+        });
     }
 };

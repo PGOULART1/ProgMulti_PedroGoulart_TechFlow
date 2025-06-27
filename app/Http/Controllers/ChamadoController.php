@@ -23,22 +23,19 @@ class ChamadoController extends Controller
      */
     public function index(): View
     {
-        if (Auth::user()->role === 'tecnica') {
-            $chamados = Chamado::with('equipe')->latest()->paginate(10);
+        $user = Auth::user();
+        $query = Chamado::with('user', 'equipe');
+
+        if ($user->role === 'tecnica') {
+            // Técnicos veem chamados abertos ou em andamento
+            $query->whereIn('status', ['aberto', 'em andamento']);
         } else {
-            $chamados = Chamado::with('equipe')
-                ->where('user_id', Auth::id())
-                ->latest()
-                ->paginate(10);
+            // Usuários comuns veem APENAS seus chamados abertos ou em andamento
+            $query->where('user_id', $user->id)
+                  ->whereIn('status', ['aberto', 'em andamento']);
         }
 
-        if ($user->equipe_id) {
-            $chamados->where('equipe_id', $user->equipe_id);
-        }
-    
-        return view('chamados.index', [
-            'chamados' => $chamados->latest()->paginate(10),
-        ]);
+        $chamados = $query->latest()->paginate(10); // Ordena pelos mais recentes e pagina
 
         return view('chamados.index', compact('chamados'));
     }
@@ -98,9 +95,7 @@ class ChamadoController extends Controller
     {
         $this->authorize('view', $chamado);
         // carregar mensagens com usuário para evitar N+1
-        $chamado->load(['mensagens.user', 'equipe']);
-        $this->authorize('view', $chamado);
-        $chamado->load('anexos');
+        $chamado->load(['mensagens.user', 'equipe', 'anexos', 'user']);
         return view('chamados.show', compact('chamado'));
     }
 
@@ -206,5 +201,54 @@ class ChamadoController extends Controller
         }
 
         return redirect()->route('chamados.show', $chamado)->with('success', 'Anexo adicionado com sucesso!');
+    }
+
+    public function close(Chamado $chamado)
+    {
+        // Somente técnicos podem fechar chamados
+        if (Auth::user()->role !== 'tecnica') {
+            return back()->with('error', 'Você não tem permissão para fechar chamados.');
+        }
+
+        // Não permitir fechar um chamado já concluído
+        if ($chamado->status === 'concluido') {
+            return back()->with('info', 'Este chamado já está concluído.');
+        }
+
+        $chamado->status = 'concluido';
+        $chamado->save();
+
+        // Opcional: Adicionar uma mensagem ao histórico do chamado indicando que foi fechado
+        Mensagem::create([
+            'chamado_id' => $chamado->id,
+            'user_id' => Auth::id(),
+            'mensagem' => 'Chamado marcado como "Concluído" por ' . Auth::user()->name . '.',
+        ]);
+
+        return redirect()->route('chamados.index')->with('success', 'Chamado fechado com sucesso!');
+    }
+
+    /**
+     * Exibe uma lista de chamados concluídos.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function concluidos()
+    {
+        $user = Auth::user();
+        $query = Chamado::with('user', 'equipe');
+
+        if ($user->role === 'tecnica') {
+            // Técnicos veem TODOS os chamados concluídos
+            $query->where('status', 'concluido');
+        } else {
+            // Usuários comuns veem APENAS seus chamados concluídos
+            $query->where('user_id', $user->id)
+                  ->where('status', 'concluido');
+        }
+
+        $chamados = $query->latest()->paginate(10);
+
+        return view('chamados.concluidos_index', compact('chamados'));
     }
 }

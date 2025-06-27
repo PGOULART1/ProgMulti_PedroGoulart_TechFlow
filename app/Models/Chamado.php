@@ -22,22 +22,11 @@ class Chamado extends Model
     ];
 
     // Defina os relacionamentos (se houver)
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+    public function user() { return $this->belongsTo(\App\Models\User::class); }
 
-    public function equipe()
-    {
-        return $this->belongsTo(Equipe::class);
-    }
-    public function mensagens()
-    {
-        return $this->hasMany(Mensagem::class)->latest();
-    }
+    public function equipe() { return $this->belongsTo(\App\Models\Equipe::class); }
 
-    public function anexos()
-    {   
-        return $this->hasMany(Anexo::class);
-    }
+    public function mensagens() { return $this->hasMany(\App\Models\Mensagem::class)->latest(); }
+
+    public function anexos() { return $this->hasMany(\App\Models\Anexo::class); }
 }
